@@ -12,4 +12,8 @@ public interface SummaryRepository extends CrudRepository<Summary, String> {
 
 	
 	List<Summary> findByModelId(String modelId);
+	//List<Summary> findTop1ById();
+	
+	//Summary findTopByIdDesc();
 }
+

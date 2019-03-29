@@ -32,6 +32,8 @@ public class BatchConfig extends DefaultBatchConfigurer{
     Processor processor;
     @Autowired
     Writer writer;
+    @Autowired
+    Reader reader;
     @Bean
     public Job job() {
         return jobBuilderFactory.get("job")
@@ -45,8 +47,8 @@ public class BatchConfig extends DefaultBatchConfigurer{
     public Step step1() {
         return stepBuilderFactory.get("step1")
                 .<List<Summary>, List<Summary>> chunk(1)
-                .reader(new Reader())
-                .processor(new Processor())
+                .reader(reader)
+                .processor(processor)
                 .writer(writer)
                 .build();
     }

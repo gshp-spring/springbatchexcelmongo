@@ -34,6 +34,16 @@ public class Summary {
 	private String mvmUseCases;
 	private String tdmTableName;
 	@Id
-	private String modelId;
+	private Integer id;
 
+	
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer i) {
+		this.id = i;
+	}
+
+	private String modelId;
 }

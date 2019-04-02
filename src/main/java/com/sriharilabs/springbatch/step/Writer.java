@@ -12,7 +12,7 @@ import com.sriharilabs.springbatch.model.Summary;
 import com.sriharilabs.springbatch.repository.SummaryRepository;
  
 @Service
-public class Writer implements ItemWriter<List<Summary>> {
+public class Writer implements ItemWriter<Summary> {
  
     Logger logger = LoggerFactory.getLogger(this.getClass());
      
@@ -20,12 +20,12 @@ public class Writer implements ItemWriter<List<Summary>> {
     SummaryRepository summaryRepository;
 
 	@Override
-	public void write(List<? extends List<Summary>> items) throws Exception {
+	public void write(List<? extends Summary> items) throws Exception {
 		
 		
-		items.get(0).forEach(d->{
+		items.forEach(d->{
 			summaryRepository.save(d);
-			System.out.println(d.getTdmTableName()+" writter  "+d.getMvmUseCases());
+			//System.out.println(d.getTdmTableName()+" writter  "+d.getMvmUseCases());
 		});
 	}
      

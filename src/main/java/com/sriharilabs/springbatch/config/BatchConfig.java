@@ -1,6 +1,7 @@
 package com.sriharilabs.springbatch.config;
  
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -46,7 +47,7 @@ public class BatchConfig extends DefaultBatchConfigurer{
     @Bean
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<List<Summary>, List<Summary>> chunk(1)
+                .< Summary, Summary> chunk(1)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)

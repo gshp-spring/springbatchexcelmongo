@@ -1,15 +1,12 @@
 package com.sriharilabs.springbatch.step;
- 
+
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import java.util.Map;
+import java.util.stream.IntStream;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -26,87 +23,84 @@ import org.springframework.stereotype.Service;
 import com.sriharilabs.springbatch.model.Summary;
 import com.sriharilabs.springbatch.repository.SummaryRepository;
 
- 
- @Service
-public class Reader implements ItemReader<List<Summary>>{
- 
-    private String[] messages = {"Hello World!", "Welcome to Spring Batch!"};
-     
-    private int count=0;
-    XSSFWorkbook myWorkBook = null;
+@Service
+public class Reader implements ItemReader<Summary> {
+
+	private String[] messages = { "Hello World!", "Welcome to Spring Batch!" };
+
+	private int count = 0;
+	XSSFWorkbook myWorkBook = null;
 	XSSFSheet mySheet = null;
 	Integer columnIndex;
 
 	int nameColumnNumber = 1;
 	int idColumnNumber = 0;
-    Logger logger = LoggerFactory.getLogger(this.getClass());
- 
-    @Autowired
-    SummaryRepository summaryRepository;
-    
-    List<Summary> employeeList = new ArrayList<Summary>();
-    Integer first=0;
-    Integer last=0;
-    @Override
-    public List<Summary> read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
-    	
-    	
-        InputStream targetStream  = new FileInputStream("Books.xlsx");
-        
-    	myWorkBook = new XSSFWorkbook(targetStream);
-    	mySheet=myWorkBook.getSheetAt(0);
-    	first=findMax();
-    	
-    	if(first !=0 && last!=first ) {
-    		last=first;
-    	return getEmployeesFromYesColumn();
-    	}
-    	
-        return null;
-    }
-    
-   public int findMax() {
-	   
-	   Iterable<Summary> summaryIterator=summaryRepository.findAll();
-	  // summaryIterator.
-	   Stream<Summary> targetStream = StreamSupport.stream(summaryIterator.spliterator(), false);
-	   
-	  Optional<Summary> maxValue= targetStream.max(Comparator.comparing(Summary::getId));
-	 //System.out.println( last.get().getId());
-	  if(maxValue.isPresent())
-	 return maxValue.get().getId();
-	  else
-		return -1;
-   }
-    
-    
-    public List<Summary> getEmployeesFromYesColumn() {
-		System.out.println(mySheet.getLastRowNum()+".."+mySheet.getPhysicalNumberOfRows()+"....");
-		
+	Logger logger = LoggerFactory.getLogger(this.getClass());
+
+	@Autowired
+	SummaryRepository summaryRepository;
+
+	Integer first = 0;
+	Integer last = 0;
+
+	int counts = 0;
+	static int size = 0;
+	List<Summary> listsummary = null;
+
+	@Override
+	public Summary read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+		InputStream targetStream = new FileInputStream("Books.xlsx");
+		myWorkBook = new XSSFWorkbook(targetStream);
+		mySheet = myWorkBook.getSheetAt(0);
+		System.out.println("REader.....");
+
+		if (listsummary == null) {
+			listsummary = getEmployeesFromYesColumn();
+			return listsummary.get(0);
+		} else if (size < listsummary.size()-1) {
+			size++;
+			return listsummary.get(size);
+		}
+
+		return null;
+	}
+
+	public List<Summary> getEmployeesFromYesColumn() {
+		List<Summary> employeeList = new ArrayList<Summary>();
+
 		mySheet.rowIterator().forEachRemaining(row -> {
-			
+			System.out.println(mapHeaders);
 			Summary summary = new Summary();
 
-			if (row.getRowNum() != 0 && row.getRowNum()!=1)  {
-				
-				    summary.setId(row.getRowNum());
-					summary.setModelId(row.getCell(nameColumnNumber).toString());
-					summary.setMvmUseCases(row.getCell(idColumnNumber).toString());
-					summary.setTdmTableName(row.getCell(2).toString());
-					employeeList.add(summary);
+			if (row.getRowNum() != 0 && row.getRowNum() != 1) {
 
+				Map<String, String> mapvalues = new HashMap<String, String>();
+				IntStream.range(0, row.getLastCellNum()).forEach(num -> {
+					mapvalues.put(mapHeaders.get(num), row.getCell(num).toString());
+				});
+				System.out.println(mapvalues);
+				summary.setId(row.getRowNum());
+				summary.setMap(mapvalues);
+				employeeList.add(summary);
+
+			} else if (row.getRowNum() == 0) {
+				getHeader(row);
 			}
 
 		});
 		return employeeList;
 
 	}
-    public boolean isThisRowNamesAndIdsExist(Row row, int cellNumber) {
-		if (row.getCell(cellNumber) != null && !(row.getCell(cellNumber).toString().trim()).equals("")) {
-			return true;
-		}
-		return false;
+
+	Map<Integer, String> mapHeaders = new HashMap<Integer, String>();
+
+	public void getHeader(Row row) {
+
+		IntStream.range(0, row.getLastCellNum()).forEach(num -> {
+			mapHeaders.put(num, row.getCell(num).toString());
+
+		});
+
 	}
 
-	
 }

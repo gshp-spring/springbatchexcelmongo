@@ -11,7 +11,7 @@ import com.sriharilabs.springbatch.model.Summary;
 public interface SummaryRepository extends CrudRepository<Summary, String> {
 
 	
-	List<Summary> findByModelId(String modelId);
+	//List<Summary> findByModelId(String modelId);
 	//List<Summary> findTop1ById();
 	
 	//Summary findTopByIdDesc();

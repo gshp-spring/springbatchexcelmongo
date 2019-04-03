@@ -81,17 +81,18 @@ public class Reader implements ItemReader<Summary> {
 			Map<String, String> filtervalues = new LinkedHashMap<String, String>();
 			List<Map<String, String>> filtersList=new ArrayList();
 			IntStream.range(0, row.getLastCellNum()).forEach(num -> {
-				String cellValue = getHeaderValue(row.getCell(num));
-				if (cellValue != null && checkPointIndex <= num) {
+				String cellValue = getCellValu(row.getCell(num));
+				if (cellValue != null && checkPointIndex >= num) {
 					mandatoryvalues.put(mapHeaders.get(num), cellValue);
 					summary.setMandatory(mandatoryvalues);
-				} else {
+				} else if (cellValue != null){
 					filtervalues.put(mapHeaders.get(num), cellValue);
-					filtersList.add(filtervalues);
-					summary.setFilters(filtersList);
+					
 				}
 			});
 
+			filtersList.add(filtervalues);
+			summary.setFilters(filtersList);
 			summary.setId(row.getRowNum());
 
 			listsummary.add(summary);
@@ -105,16 +106,23 @@ public class Reader implements ItemReader<Summary> {
 	public void getHeaders(Row row) {
 
 		IntStream.range(0, row.getLastCellNum()).forEach(num -> {
-			if (getHeaderValue(row.getCell(num)) != null)
-				mapHeaders.put(num, getHeaderValue(row.getCell(num)));
+			if (getHeaderNames(row.getCell(num)) != null)
+				mapHeaders.put(num, getHeaderNames(row.getCell(num)));
 
 		});
 		checkForMandoryFieldColumnNumer();
 	}
 
-	public String getHeaderValue(Cell cell) {
+	public String getHeaderNames(Cell cell) {
 		if (cell != null && !cell.toString().trim().equals(""))
 			return cell.toString().replaceAll("\\s+", "_");
+		return null;
+	}
+	
+	public String getCellValu(Cell cell) {
+		
+		if (cell != null && !cell.toString().trim().equals(""))
+			return cell.toString().trim();
 		return null;
 	}
 

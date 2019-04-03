@@ -1,6 +1,7 @@
 // tag::sample[]
 package com.sriharilabs.springbatch.model;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.annotation.Id;
@@ -20,13 +21,26 @@ public class Summary {
 		this.id = id;
 	}
 
-	Map<String, String> map;
+	Map<String, String> mandatory;
 
-	public Map<String, String> getMap() {
-		return map;
+	List<Map<String, String>> filters;
+
+
+	public Map<String, String> getMandatory() {
+		return mandatory;
 	}
 
-	public void setMap(Map<String, String> map) {
-		this.map = map;
+	public void setMandatory(Map<String, String> mandatory) {
+		this.mandatory = mandatory;
 	}
+
+	public List<Map<String, String>> getFilters() {
+		return filters;
+	}
+
+	public void setFilters(List<Map<String, String>> filters) {
+		this.filters = filters;
+	}
+
+	
 }

@@ -4,10 +4,12 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -33,20 +35,18 @@ public class Reader implements ItemReader<Summary> {
 	XSSFSheet mySheet = null;
 	Integer columnIndex;
 
-	int nameColumnNumber = 1;
-	int idColumnNumber = 0;
+	private final String mandatoryFieldsCheckPoint = "TDM_Table_Name";
+
 	Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired
 	SummaryRepository summaryRepository;
-
-	Integer first = 0;
-	Integer last = 0;
-
 	int counts = 0;
 	static int size = 0;
-	List<Summary> listsummary = null;
-
+	Map<Integer, String> mapHeaders = new HashMap<Integer, String>();
+	List<Summary> listsummary =null;
+	Integer checkPointIndex = null;
+	
 	@Override
 	public Summary read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
 		InputStream targetStream = new FileInputStream("Books.xlsx");
@@ -55,9 +55,10 @@ public class Reader implements ItemReader<Summary> {
 		System.out.println("REader.....");
 
 		if (listsummary == null) {
-			listsummary = getEmployeesFromYesColumn();
+			listsummary = new ArrayList<Summary>();
+			getEmployeesFromColumn();
 			return listsummary.get(0);
-		} else if (size < listsummary.size()-1) {
+		} else if (size < listsummary.size() - 1) {
 			size++;
 			return listsummary.get(size);
 		}
@@ -65,42 +66,61 @@ public class Reader implements ItemReader<Summary> {
 		return null;
 	}
 
-	public List<Summary> getEmployeesFromYesColumn() {
-		List<Summary> employeeList = new ArrayList<Summary>();
-
+	public void getEmployeesFromColumn() {
 		mySheet.rowIterator().forEachRemaining(row -> {
-			System.out.println(mapHeaders);
-			Summary summary = new Summary();
-
-			if (row.getRowNum() != 0 && row.getRowNum() != 1) {
-
-				Map<String, String> mapvalues = new HashMap<String, String>();
-				IntStream.range(0, row.getLastCellNum()).forEach(num -> {
-					mapvalues.put(mapHeaders.get(num), row.getCell(num).toString());
-				});
-				System.out.println(mapvalues);
-				summary.setId(row.getRowNum());
-				summary.setMap(mapvalues);
-				employeeList.add(summary);
-
-			} else if (row.getRowNum() == 0) {
-				getHeader(row);
-			}
-
+			addToList(row);
 		});
-		return employeeList;
 
 	}
 
-	Map<Integer, String> mapHeaders = new HashMap<Integer, String>();
+	public void addToList(Row row) {
+		Summary summary = new Summary();
+		
+		if (row.getRowNum() != 0 && row.getRowNum() != 1) {
+			Map<String, String> mandatoryvalues = new LinkedHashMap<String, String>();
+			Map<String, String> filtervalues = new LinkedHashMap<String, String>();
+			List<Map<String, String>> filtersList=new ArrayList();
+			IntStream.range(0, row.getLastCellNum()).forEach(num -> {
+				String cellValue = getHeaderValue(row.getCell(num));
+				if (cellValue != null && checkPointIndex <= num) {
+					mandatoryvalues.put(mapHeaders.get(num), cellValue);
+					summary.setMandatory(mandatoryvalues);
+				} else {
+					filtervalues.put(mapHeaders.get(num), cellValue);
+					filtersList.add(filtervalues);
+					summary.setFilters(filtersList);
+				}
+			});
 
-	public void getHeader(Row row) {
+			summary.setId(row.getRowNum());
+
+			listsummary.add(summary);
+
+		} else if (row.getRowNum() == 0) {
+			getHeaders(row);
+		}
+
+	}
+
+	public void getHeaders(Row row) {
 
 		IntStream.range(0, row.getLastCellNum()).forEach(num -> {
-			mapHeaders.put(num, row.getCell(num).toString());
+			if (getHeaderValue(row.getCell(num)) != null)
+				mapHeaders.put(num, getHeaderValue(row.getCell(num)));
 
 		});
-
+		checkForMandoryFieldColumnNumer();
 	}
 
+	public String getHeaderValue(Cell cell) {
+		if (cell != null && !cell.toString().trim().equals(""))
+			return cell.toString().replaceAll("\\s+", "_");
+		return null;
+	}
+
+	public void checkForMandoryFieldColumnNumer() {
+		mapHeaders.keySet().stream().filter(index -> {
+			return mapHeaders.get(index).equals(mandatoryFieldsCheckPoint);
+		}).forEach(index -> checkPointIndex = (Integer) index);
+	}
 }
